@@ -64,13 +64,17 @@ const WebCam = () => {
   return (
     <div className='camera'>
       <div className='webcamera'>
-        WebCam  <button onClick={getVideo} >START </button>
-        <button onClick={StopVideo} >STOP </button>
+        Take The Test   
+        <div className='submit-container'>
+        <button className='actionbutton' onClick={getVideo} >START </button>
+        <button className='actionbutton' onClick={StopVideo} >STOP </button>
+        </div>
         <div style={styles.container}>
         <video ref={videoRef} autoPlay style={styles.video}></video>
         <img src={imageUrl} alt="Overlay" style={styles.overlay} />
-        </div>
         <button className='button' onClick={takePhoto} >CAPTURE</button>
+        </div>
+
         </div>
         <div className={(hasPhoto ? 'hasPhoto' : '')}>
             <canvas ref={photoRef}></canvas>

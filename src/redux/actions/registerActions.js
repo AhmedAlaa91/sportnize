@@ -27,12 +27,14 @@ export const postRegisterRequest = () => {
 
 
   export const registeraNewUser = (body) => async (dispatch) => {
+    dispatch(postRegisterRequest());
     try {
-        dispatch(postRegisterRequest());
       const response = await registerNewUser(body)
       dispatch(postRegisterSuccess(response.data));
-      console.log(response);
     } catch (error) {
+        if (error) { // Check for non-200 status code
+            throw new Error(`Registration failed: ${error.message || 'Bad request'}`); // Throw error
+          }
         dispatch(postRegisterFailure(error.message));
     }
   };
