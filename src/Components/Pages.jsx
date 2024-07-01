@@ -25,7 +25,7 @@ const Pages = () => {
 
             <Route path="/" element={<Home/>} />
             <Route path="/about" element={<About/>} />
-            <Route path="/profile" element={<Profile/>} />
+            <Route path="/profile/:userId" element={<Profile/>} />
             <Route path="/loginsignup/:actionType" element={<LoginSignup/>} />
             <Route path="/cam" element={<WebCam/>} />
           </Routes>

@@ -17,9 +17,12 @@ import CommentRoundedIcon from "@mui/icons-material/CommentRounded";
 import PhoneRoundedIcon from "@mui/icons-material/PhoneRounded";
 import ShoppingCartRoundedIcon from "@mui/icons-material/ShoppingCartRounded";
 import { Link, BrowserRouter as Router } from 'react-router-dom';
+import { useSelector } from 'react-redux';
 
 const Navbar = () => {
     const [openMenu, setOpenMenu] = useState(false);
+    const profile = useSelector((state) => state.profile.profile);
+  
     const menuOptions = [
       {
         text: "Home",
@@ -50,11 +53,13 @@ const Navbar = () => {
         <div className="navbar-links-container">
           <Link to="/">Home</Link>
           <Link to="/about">About</Link>
-          <Link to="/profile">Profile</Link>
+          {profile[0]?<Link to={`/profile/${profile[0]['user_id']}`}>Profile</Link>:<Link to={`/profile/`}>Profile</Link>}
+ 
           <Link to="/cam">
             <BsCamera className="navbar-camera-icon" />
             </Link>
-          <Link to="/loginsignup/Login" style={{ textDecoration: 'none' }}> <button className="primary-button"> Login </button></Link> 
+            {profile[0]?<button className="primary-button"> {profile[0]['username']} </button>:<Link to="/loginsignup/Login" style={{ textDecoration: 'none' }}> <button className="primary-button"> Login </button></Link> }
+          
         </div>
         <div className="navbar-menu-container">
           <HiOutlineBars3 onClick={() => setOpenMenu(true)} />

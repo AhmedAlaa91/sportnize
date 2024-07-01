@@ -27,7 +27,11 @@ video {
     max-width: 100%;
     height: auto;
 }
-
+.submit-container{
+    display: flex;
+    gap: 30px;
+    margin: 60px auto;
+}
 .button{
     position: absolute;
     bottom: 20px;
@@ -47,6 +51,27 @@ video {
 }
 
 .button:hover {
+    background-position: 100%;
+
+}
+
+
+.actionbutton{
+    appearance: none;
+    border: none;
+    outline: none;
+    padding: 8px 16px;
+    background-image: linear-gradient(to right, #844fff 50%, #ff4f84 50%);
+    background-position: 0%;
+    background-size: 200%;
+   
+    font-size: 24px;
+    font-weight: 700;
+    transition: 0.4s;
+    cursor: pointer;
+}
+
+.actionbutton:hover {
     background-position: 100%;
 
 }

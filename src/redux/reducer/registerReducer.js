@@ -1,5 +1,5 @@
-import { combineReducers } from 'redux';
 import * as actionType from '../actions/actionTypes';
+import { error } from 'loglevel';
 
 const initialState = {
     data: [],
@@ -11,9 +11,9 @@ const initialState = {
 const registerReducer = (state = initialState, action) => {
     switch (action.type) {
       case actionType.POST_DATA_REQUEST:
-        return { ...state, loading: true ,error:null};
+        return { ...state,loading: true ,error:null};
       case actionType.POST_DATA_SUCCESS:
-        return { ...state, loading: false, data: action.payload };
+        return { ...state, loading: false, data: action.payload , error:null };
       case actionType.POST_DATA_FALIURE:
         return { ...state, loading: false, error: action.payload };
       default:
