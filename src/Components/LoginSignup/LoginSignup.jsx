@@ -23,7 +23,7 @@ const LoginSignup = ({data , loading, error, profile, registeraNewUser, loginaUs
     const confirmPasswordRef = useRef(null);
 
 
-
+    const [errorMsg, setErrorMsg] = useState(null);
     const handleSubmit = async () => {
         //setIsSubmitting(true); // Set submission state to "true"
         setAction('SignUp');
@@ -41,6 +41,7 @@ const LoginSignup = ({data , loading, error, profile, registeraNewUser, loginaUs
           navigate('/profile/'+data['id']);
         } catch (error) {
           console.error('Registration failed:', error);
+          setErrorMsg(error.message);
         } 
       };
 
@@ -61,9 +62,10 @@ const LoginSignup = ({data , loading, error, profile, registeraNewUser, loginaUs
           console.log(profile[0]);
         } catch (error) {
           console.error('Registration failed:', error);
+          setErrorMsg(error.message);
         } 
       };
-      //console.log(error);
+      console.log(errorMsg);
 
   
   return (
@@ -93,6 +95,7 @@ const LoginSignup = ({data , loading, error, profile, registeraNewUser, loginaUs
             <div className={action==="Login"?"submit gray":"submit"} onClick={()=>{handleSubmit()}} >Sign Up</div>
             <div className={action==="SignUp"?"submit gray":"submit"} onClick={()=>{ handleLogin()}}>Login</div>
         </div>
+        {errorMsg && <p style={{ color: 'red' }}>{errorMsg}</p>}
         </div>
   )
 }
