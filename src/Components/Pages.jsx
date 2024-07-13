@@ -6,7 +6,7 @@ import About from './About';
 import Profile from './Profile/Profile';
 import Home from './Home';
 import LoginSignup from './LoginSignup/LoginSignup'
-import WebCam from './Camera/WebCam'
+import WebCam from './Camera/WebCam2'
 //lazy loading for loading page component
 // reference:https://react.dev/reference/react/lazy
 

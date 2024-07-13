@@ -9,9 +9,11 @@ const WebCam = () => {
     const [imageUrl, setImageUrl] = useState(outline_man_front);
     const [hasPhoto , setHasPhoto] =  useState(false);
     
+    const canvasRef = useRef(null);
   
+    
     const getVideo = () => {
-        navigator.mediaDevices.getUserMedia({ video:{ width: 1920, height: 1080 } }).then(stream => {
+        navigator.mediaDevices.getUserMedia({ video:{ width: 1920, height: 1080 } } ).then(stream => {
         
             mediaStreamRef.current = stream;
             let video =videoRef.current;
@@ -32,7 +34,6 @@ const WebCam = () => {
 
        
     }
-
             
 
     const takePhoto =  ()=>{
@@ -45,7 +46,17 @@ const WebCam = () => {
         photo.height=height;
 
         let ctx = photo.getContext('2d')
-        ctx.drawImage(video,0,0,width,height);
+        ctx.drawImage(video, 0, 0, width, height);
+                // Draw the overlay image
+                let overlayImg = new Image();
+                overlayImg.src = imageUrl;
+                overlayImg.onload = function() {
+                    ctx.drawImage(overlayImg, 0, 0, width, height);
+        
+                    ctx.drawImage(overlayImg, 0, 0, width, height);
+        
+                    setHasPhoto(true);
+                }
         setHasPhoto(true);
     }
 
