@@ -1,5 +1,6 @@
 import React, { useRef, useEffect, useState } from 'react';
 import * as tf from '@tensorflow/tfjs';
+//import * as tf from '@tensorflow/tfjs-backend-webgpu';
 import * as posedetection from '@tensorflow-models/pose-detection';
 import outline_man_front from '../../Assets/outline_man_front.svg'; // Adjust this path
 
@@ -13,12 +14,38 @@ const WebCam = () => {
     const detectorRef = useRef(null);
     const [distanceShoulders, setDistanceShoulders] = useState(null);
 
+    // useEffect(() => {
+    //     async function loadMoveNetModel() {
+    //         const model = posedetection.SupportedModels.MoveNet;
+    //         detectorRef.current = await posedetection.createDetector(model);
+    //     }
+    //     loadMoveNetModel();
+    // }, []);
     useEffect(() => {
+        async function initializeBackend() {
+            try {
+                await tf.ready();
+                if (tf.engine().backendNames().includes('webgpu')) {
+                    await tf.setBackend('webgpu');
+                    console.log(`TensorFlow.js is using the ${tf.getBackend()} backend.`);
+                } else if (tf.engine().backendNames().includes('webgl')) {
+                    await tf.setBackend('webgl');
+                    console.log(`TensorFlow.js is using the ${tf.getBackend()} backend.`);
+                } else {
+                    await tf.setBackend('cpu');
+                    console.log(`TensorFlow.js is using the ${tf.getBackend()} backend.`);
+                }
+            } catch (err) {
+                console.error('Failed to initialize TensorFlow.js backend:', err);
+            }
+        }
+
         async function loadMoveNetModel() {
             const model = posedetection.SupportedModels.MoveNet;
             detectorRef.current = await posedetection.createDetector(model);
         }
-        loadMoveNetModel();
+
+        initializeBackend().then(loadMoveNetModel);
     }, []);
 
     const getVideo = () => {

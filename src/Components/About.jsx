@@ -7,8 +7,7 @@ import SkeletonTracker from './BodyPix/Skeleton';
 const About = () => {
   return (
     <div className="App">
-    <h1>Human Skeleton Tracker</h1>
-    <SkeletonTracker/>
+    <h1>About</h1>
   </div>
   );
 };
