@@ -1,8 +1,12 @@
 import React, { useRef, useEffect, useState } from 'react';
 import * as tf from '@tensorflow/tfjs';
+//import * as tf from '@tensorflow/tfjs-backend-webgpu';
 import * as posedetection from '@tensorflow-models/pose-detection';
 import outline_man_front from '../../Assets/outline_man_front.svg'; // Adjust this path
-
+import drawDynamicSkeleton from '../BodyPix/FrontPose'
+import drawDynamicSkeletonRight from '../BodyPix/RightPose'
+import drawDynamicSkeletonLeft from '../BodyPix/LeftPose'
+import { green } from '@mui/material/colors';
 const WebCam = () => {
     const videoRef = useRef(null);
     const photoRef = useRef(null);
@@ -13,13 +17,67 @@ const WebCam = () => {
     const detectorRef = useRef(null);
     const [distanceShoulders, setDistanceShoulders] = useState(null);
 
+    const [frontPoseCaptured,setFrontPoseCaptured] = useState(false);
+    const frontPoseCapturedRef = useRef(frontPoseCaptured);
+    const [rightPoseCaptured,setRightPoseCaptured] = useState(false);
+    const rightPoseCapturedRef = useRef(rightPoseCaptured);
+    const [leftPoseCaptured,setLeftPoseCaptured] = useState(false);
+    const leftPoseCapturedRef = useRef(leftPoseCaptured);
+    
+    const [headerText,SetHeaderText] = useState('Take Test');
+    const [headerTextColor,SetHeaderTextColor] = useState('black');
+    const headerTextColorRef = useRef(headerTextColor);
+
+    let isAnimating = true;
+
     useEffect(() => {
+        async function initializeBackend() {
+            try {
+                await tf.ready();
+                if (tf.engine().backendNames().includes('webgpu')) {
+                    await tf.setBackend('webgpu');
+                    console.log(`TensorFlow.js is using the ${tf.getBackend()} backend.`);
+                } else if (tf.engine().backendNames().includes('webgl')) {
+                    await tf.setBackend('webgl');
+                    console.log(`TensorFlow.js is using the ${tf.getBackend()} backend.`);
+                } else {
+                    await tf.setBackend('cpu');
+                    console.log(`TensorFlow.js is using the ${tf.getBackend()} backend.`);
+                }
+            } catch (err) {
+                console.error('Failed to initialize TensorFlow.js backend:', err);
+            }
+        }
+
         async function loadMoveNetModel() {
             const model = posedetection.SupportedModels.MoveNet;
             detectorRef.current = await posedetection.createDetector(model);
         }
-        loadMoveNetModel();
+
+        initializeBackend().then(loadMoveNetModel);
     }, []);
+
+    useEffect(() => {
+        frontPoseCapturedRef.current = frontPoseCaptured;
+    }, [frontPoseCaptured]);
+
+
+    useEffect(() => {
+        rightPoseCapturedRef.current = rightPoseCaptured;
+    }, [rightPoseCaptured]);
+
+
+
+
+    const startAnimation = () => {
+        isAnimating = true;
+        renderFrame();
+    };
+
+
+    const stopAnimation = () => {
+        isAnimating = false;
+    };
 
     const getVideo = () => {
         navigator.mediaDevices.getUserMedia({ video: { width: 1920, height: 1080 } }).then(stream => {
@@ -27,14 +85,16 @@ const WebCam = () => {
             let video = videoRef.current;
             video.srcObject = stream;
             video.play();
-            renderFrame();
+            startAnimation();
         }).catch(err => { console.log(err) });
     };
 
     const StopVideo = () => {
+        stopAnimation();
         mediaStreamRef.current.getTracks().forEach(track => track.stop());
         let video = videoRef.current;
         video.srcObject = null;
+        
     };
 
     const renderFrame = () => {
@@ -42,9 +102,11 @@ const WebCam = () => {
             const ctx = canvasRef.current.getContext('2d');
             ctx.clearRect(0, 0, canvasRef.current.width, canvasRef.current.height);
             ctx.drawImage(videoRef.current, 0, 0, canvasRef.current.width, canvasRef.current.height);
-            //drawStaticSkeleton(ctx);
+            console.log('render');
+            if (isAnimating) {
+                requestAnimationFrame(renderFrame);
+            }
             handleFrame(canvasRef.current);
-            requestAnimationFrame(renderFrame);
         }
     };
 
@@ -53,77 +115,107 @@ const WebCam = () => {
             const poses = await detectorRef.current.estimatePoses(canvas, {
                 flipHorizontal: false,
             });
-            drawDynamicSkeleton(poses, canvas.getContext('2d'));
-            if (poses.length > 0) {
-                const estimatedDistanceShoulders = estimateShoulderDistance(poses[0]);
-                const distance = estimateNoseAnkleDistance(poses[0]);
-                setDistanceShoulders(distance);
+            SetHeaderText('FRONT POSE DETECTION')
+            let frontCheck= drawDynamicSkeleton(poses, canvas.getContext('2d'));
+         
+            if (frontCheck && !frontPoseCapturedRef.current)
+            {
+               SetHeaderTextColor('green');
+
+
+                  
+
+                  setTimeout(() => {
+                   // stopAnimation();
+                   setFrontPoseCaptured(true);
+             
+                   takePhoto();
+                    
+                    
+                  
+                  }, 1000);
+
+                  console.log('frontPoseCapturedRef.current',frontPoseCapturedRef.current  );
+
             }
+
+           
+
+          
+
+            else if (frontPoseCapturedRef.current && !rightPoseCapturedRef.current)
+                {
+                   // startAnimation();
+                    //getVideo();
+                    SetHeaderText('RIGHT POSE DETECTION')
+                    SetHeaderTextColor('black');
+                   // startAnimation();
+                   // getVideo();
+
+                    let rightCheck= drawDynamicSkeletonRight(poses, canvas.getContext('2d'));
+    
+                    if (rightCheck )
+                        {
+                            SetHeaderTextColor('green');
+
+                            takePhoto();
+                                
+                            setRightPoseCaptured(true);
+                             
+            
+                            //   setTimeout(() => {
+                            //     StopVideo();
+                            //    // stopAnimation();
+                              
+                            //   }, 5000);
+                            console.log('rightPoseCapturedRef.current',rightPoseCapturedRef.current  );
+            
+                        }
+                     
+    
+                }
+
+
+                else if (rightPoseCapturedRef.current && !leftPoseCapturedRef.current)
+                    {
+
+                        console.log('left');
+                       // startAnimation();
+                        //getVideo();
+                        SetHeaderText('LEFT POSE DETECTION');
+                        SetHeaderTextColor('black');
+                       // startAnimation();
+                       // getVideo();
+    
+                        let leftCheck= drawDynamicSkeletonLeft(poses, canvas.getContext('2d'));
+        
+                        if (leftCheck )
+                            {
+                                SetHeaderTextColor('green');
+    
+                                takePhoto();
+                                    
+                                setLeftPoseCaptured(true);
+                                 
+                
+                                  setTimeout(() => {
+                                    StopVideo();
+                                   stopAnimation();
+                                  
+                                  }, 5000);
+                
+                            }
+        
+                    }
+
+            
+
         }
     };
 
-    const drawDynamicSkeleton = (poses, ctx) => {
-        poses.forEach((pose) => {
-            const keypoints = pose.keypoints;
-            //ctx.strokeStyle = 'red';
-            const allDetected = keypoints.every(keypoint => keypoint.score > 0.7);
-            const nose = keypoints.find(keypoint => keypoint.name === 'nose');
-            const leftAnkle = keypoints.find(keypoint => keypoint.name === 'left_ankle');
-            const rightAnkle = keypoints.find(keypoint => keypoint.name === 'right_ankle');
-    
-            const noseAndAnkleDetected = (nose && nose.score > 0.7) && ((leftAnkle && leftAnkle.score > 0.7) || (rightAnkle && rightAnkle.score > 0.7));
-    
-            let colorStyle = noseAndAnkleDetected ? 'green' : 'red';
-            ctx.strokeStyle =colorStyle
-
-            keypoints.forEach((keypoint) => {
-                if (keypoint.score > 0.7) {
-                    const { y, x } = keypoint;
-                    ctx.beginPath();
-                    ctx.arc(x, y, 5, 0, 2 * Math.PI);
-                    ctx.fillStyle = colorStyle
-                    ctx.fill();
-                }
-            // const leftShoulder = keypoints.find(keypoint => keypoint.name === 'left_shoulder');
-            // const rightShoulder = keypoints.find(keypoint => keypoint.name === 'right_shoulder');
-
-            // const shouldersDetected = leftShoulder && rightShoulder && leftShoulder.score > 0.7 && rightShoulder.score > 0.7;
-            // ctx.strokeStyle = shouldersDetected ? 'green' : 'red';
-
-            // keypoints.forEach((keypoint) => {
-            //     if (keypoint.score > 0.7) {
-            //         const { y, x } = keypoint;
-            //         ctx.beginPath();
-            //         ctx.arc(x, y, 5, 0, 2 * Math.PI);
-            //         ctx.fillStyle = shouldersDetected ? 'green' : 'red';
-            //         ctx.fill();
-            //     }
-            });
-
-            const adjacentKeyPoints = posedetection.util.getAdjacentPairs(posedetection.SupportedModels.MoveNet);
-            adjacentKeyPoints.forEach(([i, j]) => {
-                ctx.beginPath();
-                ctx.moveTo(keypoints[i].x, keypoints[i].y);
-                ctx.lineTo(keypoints[j].x, keypoints[j].y);
-                ctx.strokeStyle = colorStyle
-                ctx.stroke();
-            });
-
-            if (noseAndAnkleDetected) {
-
-                setTimeout(() => {
-                    takePhoto();
-                  }, 5000);
-
-                  setTimeout(() => {
-                    StopVideo();
-                  }, 6000);
-               
-            }
-        });
-    };
-
+ 
     const takePhoto = () => {
+       // stopAnimation();
         const width = 414;
         const height = width / (16 / 9);
         let video = videoRef.current;
@@ -134,15 +226,6 @@ const WebCam = () => {
 
         let ctx = photo.getContext('2d');
         ctx.drawImage(video, 0, 0, width, height);
-
-        // Draw the overlay image
-        // let overlayImg = new Image();
-        // overlayImg.src = imageUrl;
-        // overlayImg.onload = function () {
-        //     ctx.drawImage(overlayImg, 0, 0, width, height);
-        //     setHasPhoto(true);
-        // };
-        
         setHasPhoto(true);
     };
 
@@ -153,57 +236,57 @@ const WebCam = () => {
         ctx.clearRect(0, 0, photo.width, photo.height);
     };
 
-    const estimateShoulderDistance = (pose) => {
-        const keypoints = pose.keypoints;
-        const leftShoulder = keypoints.find(keypoint => keypoint.name === 'left_shoulder');
-        const rightShoulder = keypoints.find(keypoint => keypoint.name === 'right_shoulder');
+    // const estimateShoulderDistance = (pose) => {
+    //     const keypoints = pose.keypoints;
+    //     const leftShoulder = keypoints.find(keypoint => keypoint.name === 'left_shoulder');
+    //     const rightShoulder = keypoints.find(keypoint => keypoint.name === 'right_shoulder');
 
-        if (leftShoulder && rightShoulder && leftShoulder.score > 0.7 && rightShoulder.score > 0.7) {
-            const shoulderDistancePixels = Math.sqrt(
-                Math.pow(leftShoulder.x - rightShoulder.x, 2) + Math.pow(leftShoulder.y - rightShoulder.y, 2)
-            );
+    //     if (leftShoulder && rightShoulder && leftShoulder.score > 0.7 && rightShoulder.score > 0.7) {
+    //         const shoulderDistancePixels = Math.sqrt(
+    //             Math.pow(leftShoulder.x - rightShoulder.x, 2) + Math.pow(leftShoulder.y - rightShoulder.y, 2)
+    //         );
 
-            // Assuming a reference width for shoulder distance (e.g., average human shoulder width)
-            const averageShoulderWidthMeters = 0.4; // 0.4 meters
-            const frameWidthPixels = 640; // frame width in pixels
+    //         // Assuming a reference width for shoulder distance (e.g., average human shoulder width)
+    //         const averageShoulderWidthMeters = 0.4; // 0.4 meters
+    //         const frameWidthPixels = 640; // frame width in pixels
 
-            const shoulderDistanceMeters = (shoulderDistancePixels / frameWidthPixels) * averageShoulderWidthMeters;
+    //         const shoulderDistanceMeters = (shoulderDistancePixels / frameWidthPixels) * averageShoulderWidthMeters;
 
-            return shoulderDistanceMeters;
-        }
+    //         return shoulderDistanceMeters;
+    //     }
 
-        return null;
-    };
+    //     return null;
+    // };
     
-    const estimateNoseAnkleDistance = (pose) => {
-        const keypoints = pose.keypoints;
-        const nose = keypoints.find(keypoint => keypoint.name === 'nose');
-        const leftAnkle = keypoints.find(keypoint => keypoint.name === 'left_ankle');
-        const rightAnkle = keypoints.find(keypoint => keypoint.name === 'right_ankle');
+    // const estimateNoseAnkleDistance = (pose) => {
+    //     const keypoints = pose.keypoints;
+    //     const nose = keypoints.find(keypoint => keypoint.name === 'nose');
+    //     const leftAnkle = keypoints.find(keypoint => keypoint.name === 'left_ankle');
+    //     const rightAnkle = keypoints.find(keypoint => keypoint.name === 'right_ankle');
 
-        if (nose && (leftAnkle || rightAnkle) && nose.score > 0.7 && (leftAnkle?.score > 0.7 || rightAnkle?.score > 0.7)) {
-            const ankle = leftAnkle?.score > 0.7 ? leftAnkle : rightAnkle;
-            const distancePixels = Math.sqrt(
-                Math.pow(nose.x - ankle.x, 2) + Math.pow(nose.y - ankle.y, 2)
-            );
+    //     if (nose && (leftAnkle || rightAnkle) && nose.score > 0.7 && (leftAnkle?.score > 0.7 || rightAnkle?.score > 0.7)) {
+    //         const ankle = leftAnkle?.score > 0.7 ? leftAnkle : rightAnkle;
+    //         const distancePixels = Math.sqrt(
+    //             Math.pow(nose.x - ankle.x, 2) + Math.pow(nose.y - ankle.y, 2)
+    //         );
 
-            // Assuming a reference distance for nose to ankle in real-world (e.g., average human height)
-            const averageHeightMeters = 1.7; // 1.7 meters
-            const frameHeightPixels = 1080; // frame height in pixels
+    //         // Assuming a reference distance for nose to ankle in real-world (e.g., average human height)
+    //         const averageHeightMeters = 1.7; // 1.7 meters
+    //         const frameHeightPixels = 1080; // frame height in pixels
 
-            const distanceMeters = (distancePixels / frameHeightPixels) * averageHeightMeters;
-            const distanceCm = distanceMeters * 100; // Convert meters to centimeters
+    //         const distanceMeters = (distancePixels / frameHeightPixels) * averageHeightMeters;
+    //         const distanceCm = distanceMeters * 100; // Convert meters to centimeters
 
-            return distanceCm;
-        }
+    //         return distanceCm;
+    //     }
 
-        return null;
-    };
+    //     return null;
+    // };
 
     return (
         <div className='camera'>
             <div className='webcamera'>
-                Take The Test
+            <h1  style={{ color: headerTextColor }} >{headerText}</h1>
                 <div className='submit-container'>
                     <button className='actionbutton' onClick={getVideo}>START</button>
                     <button className='actionbutton' onClick={StopVideo}>STOP</button>
@@ -212,7 +295,6 @@ const WebCam = () => {
                     <video ref={videoRef} autoPlay style={styles.video} hidden></video>
                     <canvas ref={canvasRef} width="1920" height="1080"></canvas>
                     <img src={imageUrl} alt="Overlay" style={styles.overlay} />
-                    {distanceShoulders && <div style={styles.distance}>Estimated Nose - Anekls Distance: {distanceShoulders.toFixed(2)} Cmeters</div>}
                     <button className='button' onClick={takePhoto}>CAPTURE</button>
                 </div>
             </div>
