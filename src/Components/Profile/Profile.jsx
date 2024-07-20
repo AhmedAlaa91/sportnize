@@ -4,10 +4,12 @@ import Select from "react-select";
 import { useParams, useNavigate } from 'react-router-dom';
 import {updateaProfile} from '../../redux/actions/updateProfileActions';
 import { connect, useSelector } from 'react-redux';
+import ClipLoader from 'react-spinners/ClipLoader';
 
 const Profile = ({profile , loading, error, updateaProfile,}) => {
 
   const navigate = useNavigate();
+  const [isSubmitting, setIsSubmitting] = useState(false);
 
   const profileValues = useSelector((state) => state.profile.profile);
 
@@ -80,6 +82,7 @@ const Profile = ({profile , loading, error, updateaProfile,}) => {
   
   const handleSubmit = async () => {
     //setIsSubmitting(true); // Set submission state to "true"
+    setIsSubmitting(true);
  
     try {
       const firstName = 'first_name';
@@ -108,6 +111,9 @@ const Profile = ({profile , loading, error, updateaProfile,}) => {
     } catch (error) {
       console.error('Registration failed:', error);
     } 
+    finally {
+      setIsSubmitting(false); // Set submission state to "false"
+    }
   };
 
   return (
@@ -183,7 +189,9 @@ const Profile = ({profile , loading, error, updateaProfile,}) => {
         </div>
         </div>
         <div className='submit-container'>
+        {isSubmitting ? <ClipLoader size={50} /> : 
             <div className={"submit"} onClick={()=>{handleSubmit()}} >Update</div>
+        }
         </div>
     </div>
     

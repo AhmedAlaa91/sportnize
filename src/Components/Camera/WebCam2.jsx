@@ -1,5 +1,6 @@
 import React, { useRef, useEffect, useState } from 'react';
 import * as tf from '@tensorflow/tfjs';
+//import * as tf from '@tensorflow/tfjs-backend-webgpu';
 import * as posedetection from '@tensorflow-models/pose-detection';
 import outline_man_front from '../../Assets/outline_man_front.svg'; // Adjust this path
 
@@ -13,12 +14,38 @@ const WebCam = () => {
     const detectorRef = useRef(null);
     const [distanceShoulders, setDistanceShoulders] = useState(null);
 
+    // useEffect(() => {
+    //     async function loadMoveNetModel() {
+    //         const model = posedetection.SupportedModels.MoveNet;
+    //         detectorRef.current = await posedetection.createDetector(model);
+    //     }
+    //     loadMoveNetModel();
+    // }, []);
     useEffect(() => {
+        async function initializeBackend() {
+            try {
+                await tf.ready();
+                if (tf.engine().backendNames().includes('webgpu')) {
+                    await tf.setBackend('webgpu');
+                    console.log(`TensorFlow.js is using the ${tf.getBackend()} backend.`);
+                } else if (tf.engine().backendNames().includes('webgl')) {
+                    await tf.setBackend('webgl');
+                    console.log(`TensorFlow.js is using the ${tf.getBackend()} backend.`);
+                } else {
+                    await tf.setBackend('cpu');
+                    console.log(`TensorFlow.js is using the ${tf.getBackend()} backend.`);
+                }
+            } catch (err) {
+                console.error('Failed to initialize TensorFlow.js backend:', err);
+            }
+        }
+
         async function loadMoveNetModel() {
             const model = posedetection.SupportedModels.MoveNet;
             detectorRef.current = await posedetection.createDetector(model);
         }
-        loadMoveNetModel();
+
+        initializeBackend().then(loadMoveNetModel);
     }, []);
 
     const getVideo = () => {
@@ -56,88 +83,48 @@ const WebCam = () => {
             drawDynamicSkeleton(poses, canvas.getContext('2d'));
             if (poses.length > 0) {
                 const estimatedDistanceShoulders = estimateShoulderDistance(poses[0]);
-                setDistanceShoulders(estimatedDistanceShoulders);
+                const distance = estimateNoseAnkleDistance(poses[0]);
+                setDistanceShoulders(distance);
             }
         }
-    };
-
-    const drawStaticSkeleton = (ctx) => {
-        const staticSkeletonKeypoints = [
-            { x: 320, y: 100 },  // head
-            { x: 320, y: 200 },  // neck
-            { x: 270, y: 250 },  // left shoulder
-            { x: 370, y: 250 },  // right shoulder
-            { x: 270, y: 350 },  // left elbow
-            { x: 370, y: 350 },  // right elbow
-            { x: 270, y: 450 },  // left wrist
-            { x: 370, y: 450 },  // right wrist
-            { x: 320, y: 450 },  // torso
-            { x: 270, y: 550 },  // left hip
-            { x: 370, y: 550 },  // right hip
-            { x: 270, y: 650 },  // left knee
-            { x: 370, y: 650 },  // right knee
-            { x: 270, y: 750 },  // left ankle
-            { x: 370, y: 750 }   // right ankle
-        ];
-
-        ctx.strokeStyle = 'blue';
-        ctx.lineWidth = 2;
-
-        // Draw skeleton lines
-        const drawLine = (from, to) => {
-            ctx.beginPath();
-            ctx.moveTo(from.x, from.y);
-            ctx.lineTo(to.x, to.y);
-            ctx.stroke();
-        };
-
-        // Drawing static skeleton
-        drawLine(staticSkeletonKeypoints[0], staticSkeletonKeypoints[1]);
-        drawLine(staticSkeletonKeypoints[1], staticSkeletonKeypoints[2]);
-        drawLine(staticSkeletonKeypoints[1], staticSkeletonKeypoints[3]);
-        drawLine(staticSkeletonKeypoints[2], staticSkeletonKeypoints[4]);
-        drawLine(staticSkeletonKeypoints[3], staticSkeletonKeypoints[5]);
-        drawLine(staticSkeletonKeypoints[4], staticSkeletonKeypoints[6]);
-        drawLine(staticSkeletonKeypoints[5], staticSkeletonKeypoints[7]);
-        drawLine(staticSkeletonKeypoints[1], staticSkeletonKeypoints[8]);
-        drawLine(staticSkeletonKeypoints[8], staticSkeletonKeypoints[9]);
-        drawLine(staticSkeletonKeypoints[8], staticSkeletonKeypoints[10]);
-        drawLine(staticSkeletonKeypoints[9], staticSkeletonKeypoints[11]);
-        drawLine(staticSkeletonKeypoints[10], staticSkeletonKeypoints[12]);
-        drawLine(staticSkeletonKeypoints[11], staticSkeletonKeypoints[13]);
-        drawLine(staticSkeletonKeypoints[12], staticSkeletonKeypoints[14]);
     };
 
     const drawDynamicSkeleton = (poses, ctx) => {
         poses.forEach((pose) => {
             const keypoints = pose.keypoints;
-            // ctx.strokeStyle = 'red';
-            // const allDetected = keypoints.every(keypoint => keypoint.score > 0.5);
-            // ctx.strokeStyle = allDetected ? 'green' : 'red';
-
-            // keypoints.forEach((keypoint) => {
-            //     if (keypoint.score > 0.5) {
-            //         const { y, x } = keypoint;
-            //         ctx.beginPath();
-            //         ctx.arc(x, y, 5, 0, 2 * Math.PI);
-            //         ctx.fillStyle = allDetected ? 'green' : 'red';
-            //         ctx.fillStyle = 'red';
-            //         ctx.fill();
-            //     }
-            const leftShoulder = keypoints.find(keypoint => keypoint.name === 'left_shoulder');
-            const rightShoulder = keypoints.find(keypoint => keypoint.name === 'right_shoulder');
-
-            const shouldersDetected = leftShoulder && rightShoulder && leftShoulder.score > 0.5 && rightShoulder.score > 0.5;
-            ctx.strokeStyle = shouldersDetected ? 'green' : 'red';
+            //ctx.strokeStyle = 'red';
+            const allDetected = keypoints.every(keypoint => keypoint.score > 0.7);
+            const nose = keypoints.find(keypoint => keypoint.name === 'nose');
+            const leftAnkle = keypoints.find(keypoint => keypoint.name === 'left_ankle');
+            const rightAnkle = keypoints.find(keypoint => keypoint.name === 'right_ankle');
+    
+            const noseAndAnkleDetected = (nose && nose.score > 0.7) && ((leftAnkle && leftAnkle.score > 0.7) || (rightAnkle && rightAnkle.score > 0.7));
+    
+            let colorStyle = noseAndAnkleDetected ? 'green' : 'red';
+            ctx.strokeStyle =colorStyle
 
             keypoints.forEach((keypoint) => {
-                if (keypoint.score > 0.5) {
+                if (keypoint.score > 0.7) {
                     const { y, x } = keypoint;
                     ctx.beginPath();
                     ctx.arc(x, y, 5, 0, 2 * Math.PI);
-                    ctx.fillStyle = shouldersDetected ? 'green' : 'red';
+                    ctx.fillStyle = colorStyle
                     ctx.fill();
                 }
+            // const leftShoulder = keypoints.find(keypoint => keypoint.name === 'left_shoulder');
+            // const rightShoulder = keypoints.find(keypoint => keypoint.name === 'right_shoulder');
+
+            // const shouldersDetected = leftShoulder && rightShoulder && leftShoulder.score > 0.7 && rightShoulder.score > 0.7;
+            // ctx.strokeStyle = shouldersDetected ? 'green' : 'red';
+
+            // keypoints.forEach((keypoint) => {
+            //     if (keypoint.score > 0.7) {
+            //         const { y, x } = keypoint;
+            //         ctx.beginPath();
+            //         ctx.arc(x, y, 5, 0, 2 * Math.PI);
+            //         ctx.fillStyle = shouldersDetected ? 'green' : 'red';
+            //         ctx.fill();
+            //     }
             });
 
             const adjacentKeyPoints = posedetection.util.getAdjacentPairs(posedetection.SupportedModels.MoveNet);
@@ -145,9 +132,21 @@ const WebCam = () => {
                 ctx.beginPath();
                 ctx.moveTo(keypoints[i].x, keypoints[i].y);
                 ctx.lineTo(keypoints[j].x, keypoints[j].y);
-                ctx.strokeStyle = shouldersDetected ? 'green' : 'red';
+                ctx.strokeStyle = colorStyle
                 ctx.stroke();
             });
+
+            if (noseAndAnkleDetected) {
+
+                setTimeout(() => {
+                    takePhoto();
+                  }, 5000);
+
+                  setTimeout(() => {
+                    StopVideo();
+                  }, 6000);
+               
+            }
         });
     };
 
@@ -164,12 +163,13 @@ const WebCam = () => {
         ctx.drawImage(video, 0, 0, width, height);
 
         // Draw the overlay image
-        let overlayImg = new Image();
-        overlayImg.src = imageUrl;
-        overlayImg.onload = function () {
-            ctx.drawImage(overlayImg, 0, 0, width, height);
-            setHasPhoto(true);
-        };
+        // let overlayImg = new Image();
+        // overlayImg.src = imageUrl;
+        // overlayImg.onload = function () {
+        //     ctx.drawImage(overlayImg, 0, 0, width, height);
+        //     setHasPhoto(true);
+        // };
+        
         setHasPhoto(true);
     };
 
@@ -185,7 +185,7 @@ const WebCam = () => {
         const leftShoulder = keypoints.find(keypoint => keypoint.name === 'left_shoulder');
         const rightShoulder = keypoints.find(keypoint => keypoint.name === 'right_shoulder');
 
-        if (leftShoulder && rightShoulder && leftShoulder.score > 0.5 && rightShoulder.score > 0.5) {
+        if (leftShoulder && rightShoulder && leftShoulder.score > 0.7 && rightShoulder.score > 0.7) {
             const shoulderDistancePixels = Math.sqrt(
                 Math.pow(leftShoulder.x - rightShoulder.x, 2) + Math.pow(leftShoulder.y - rightShoulder.y, 2)
             );
@@ -197,6 +197,31 @@ const WebCam = () => {
             const shoulderDistanceMeters = (shoulderDistancePixels / frameWidthPixels) * averageShoulderWidthMeters;
 
             return shoulderDistanceMeters;
+        }
+
+        return null;
+    };
+    
+    const estimateNoseAnkleDistance = (pose) => {
+        const keypoints = pose.keypoints;
+        const nose = keypoints.find(keypoint => keypoint.name === 'nose');
+        const leftAnkle = keypoints.find(keypoint => keypoint.name === 'left_ankle');
+        const rightAnkle = keypoints.find(keypoint => keypoint.name === 'right_ankle');
+
+        if (nose && (leftAnkle || rightAnkle) && nose.score > 0.7 && (leftAnkle?.score > 0.7 || rightAnkle?.score > 0.7)) {
+            const ankle = leftAnkle?.score > 0.7 ? leftAnkle : rightAnkle;
+            const distancePixels = Math.sqrt(
+                Math.pow(nose.x - ankle.x, 2) + Math.pow(nose.y - ankle.y, 2)
+            );
+
+            // Assuming a reference distance for nose to ankle in real-world (e.g., average human height)
+            const averageHeightMeters = 1.7; // 1.7 meters
+            const frameHeightPixels = 1080; // frame height in pixels
+
+            const distanceMeters = (distancePixels / frameHeightPixels) * averageHeightMeters;
+            const distanceCm = distanceMeters * 100; // Convert meters to centimeters
+
+            return distanceCm;
         }
 
         return null;
@@ -214,7 +239,7 @@ const WebCam = () => {
                     <video ref={videoRef} autoPlay style={styles.video} hidden></video>
                     <canvas ref={canvasRef} width="1920" height="1080"></canvas>
                     <img src={imageUrl} alt="Overlay" style={styles.overlay} />
-                    {distanceShoulders && <div style={styles.distance}>Estimated Shoulder Distance: {distanceShoulders.toFixed(2)} meters</div>}
+                    {distanceShoulders && <div style={styles.distance}>Estimated Nose - Anekls Distance: {distanceShoulders.toFixed(2)} Cmeters</div>}
                     <button className='button' onClick={takePhoto}>CAPTURE</button>
                 </div>
             </div>
@@ -239,12 +264,12 @@ const styles = {
     },
     overlay: {
         position: 'absolute',
-        top: '0',
+        bottom: '0',
         left: '0',
         width: '100%',
-        height: '100%',
+        height: '90%',
         pointerEvents: 'none', // Ensure clicks go through to the video
-        opacity: 0.5, // Adjust the opacity value to make the overlay more transparent
+        opacity: 0.7, // Adjust the opacity value to make the overlay more transparent
     },
 };
 export default WebCam;

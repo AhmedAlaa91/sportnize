@@ -8,8 +8,11 @@ import {registeraNewUser} from '../../redux/actions/registerActions';
 import {loginaUser} from '../../redux/actions/loginActions';
 import { connect } from 'react-redux';
 import Profile from '../Profile/Profile'
+import ClipLoader from 'react-spinners/ClipLoader';
+
 const LoginSignup = ({data , loading, error, profile, registeraNewUser, loginaUser,} ) => {
     const navigate = useNavigate();
+    const [isSubmitting, setIsSubmitting] = useState(false);
     // useEffect(() => {
     //   // Optional: Perform actions based on the error state here (e.g., display error messages)
     // }, [error]); // Re-run effect whenever error state changes
@@ -26,6 +29,7 @@ const LoginSignup = ({data , loading, error, profile, registeraNewUser, loginaUs
     const [errorMsg, setErrorMsg] = useState(null);
     const handleSubmit = async () => {
         //setIsSubmitting(true); // Set submission state to "true"
+        setIsSubmitting(true);
         setAction('SignUp');
         try {
  
@@ -38,11 +42,13 @@ const LoginSignup = ({data , loading, error, profile, registeraNewUser, loginaUs
           await registeraNewUser(JSON.parse(JSON.stringify(registerDataToSubmit)));
     
           // Handle successful registration (e.g., navigate to profile)
-          navigate('/profile/'+data['id']);
+          if (data['id']){navigate('/profile/'+data['id']);}
         } catch (error) {
           console.error('Registration failed:', error);
           setErrorMsg(error.message);
-        } 
+        }  finally {
+          setIsSubmitting(false); // Set submission state to "false"
+        }
       };
 
     const handleLogin = async () => {
@@ -91,10 +97,17 @@ const LoginSignup = ({data , loading, error, profile, registeraNewUser, loginaUs
         </div>
         {action==="SignUp"?<div></div>: 
         <div className="forgot-password">Lost Password? <span>Click Here!</span></div>}
+        
         <div className='submit-container'>
+        {isSubmitting ? <ClipLoader size={50} /> : 
+          <div className='submit-container'> 
             <div className={action==="Login"?"submit gray":"submit"} onClick={()=>{handleSubmit()}} >Sign Up</div>
             <div className={action==="SignUp"?"submit gray":"submit"} onClick={()=>{ handleLogin()}}>Login</div>
+            </div>
+            }
         </div>
+
+        
         {errorMsg && <p style={{ color: 'red' }}>{errorMsg}</p>}
         </div>
   )
