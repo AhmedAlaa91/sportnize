@@ -16,6 +16,8 @@ const LoginSignup = ({data , loading, error, profile, registeraNewUser, loginaUs
     // useEffect(() => {
     //   // Optional: Perform actions based on the error state here (e.g., display error messages)
     // }, [error]); // Re-run effect whenever error state changes
+
+
   
     const { actionType } = useParams();
     const [action,setAction]= useState(actionType);
@@ -39,10 +41,12 @@ const LoginSignup = ({data , loading, error, profile, registeraNewUser, loginaUs
             password2: confirmPasswordRef.current.value,
           };
     
-          await registeraNewUser(JSON.parse(JSON.stringify(registerDataToSubmit)));
+          const userData = await registeraNewUser(JSON.parse(JSON.stringify(registerDataToSubmit)));
+          console.log(userData);
     
           // Handle successful registration (e.g., navigate to profile)
-          if (data['id']){navigate('/profile/'+data['id']);}
+          
+          if (userData.id){navigate('/profile/'+userData.id);}
         } catch (error) {
           console.error('Registration failed:', error);
           setErrorMsg(error.message);
@@ -52,7 +56,7 @@ const LoginSignup = ({data , loading, error, profile, registeraNewUser, loginaUs
       };
 
     const handleLogin = async () => {
-        //setIsSubmitting(true); // Set submission state to "true"
+        setIsSubmitting(true); // Set submission state to "true"
         setAction('Login');
         try {
  
@@ -60,16 +64,20 @@ const LoginSignup = ({data , loading, error, profile, registeraNewUser, loginaUs
             username: userNameRef.current.value,
             password: passwordRef.current.value,
           };
+
+          if ( userNameRef.current.value && passwordRef.current.value ){
     
           await loginaUser(JSON.parse(JSON.stringify(loginData)));
     
           // Handle successful registration (e.g., navigate to profile)
           navigate('/');
-          console.log(profile[0]);
+          }
         } catch (error) {
           console.error('Registration failed:', error);
           setErrorMsg(error.message);
-        } 
+        }  finally {
+          setIsSubmitting(false); // Set submission state to "false"
+        }
       };
       console.log(errorMsg);
 

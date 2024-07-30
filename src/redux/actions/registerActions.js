@@ -11,8 +11,6 @@ export const postRegisterRequest = () => {
   };
   
   export const postRegisterSuccess = (data) => {
-    console.log('data');
-    console.log(data);
     return {
       type: actionTypes.POST_DATA_SUCCESS,
       payload: data,
@@ -34,10 +32,12 @@ export const postRegisterRequest = () => {
       dispatch(postRegisterRequest());
       const response = await registerNewUser(body)
       dispatch(postRegisterSuccess(response.data));
+      return response.data;
     } catch (error) {
         if (error) { // Check for non-200 status code
             throw new Error(`Registration failed: ${error.message || 'Bad request'}`); // Throw error
           }
         dispatch(postRegisterFailure(error.message));
+        return null;
     }
   };

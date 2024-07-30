@@ -5,27 +5,39 @@ import { useParams, useNavigate } from 'react-router-dom';
 import {updateaProfile} from '../../redux/actions/updateProfileActions';
 import { connect, useSelector } from 'react-redux';
 import ClipLoader from 'react-spinners/ClipLoader';
-
-const Profile = ({profile , loading, error, updateaProfile,}) => {
+import { useDispatch } from "react-redux";
+import {fetcharofile} from '../../redux/actions/fetchProfileActions';
+const Profile = ({profile, loading, error, updateaProfile,}) => {
 
   const navigate = useNavigate();
   const [isSubmitting, setIsSubmitting] = useState(false);
 
-  const profileValues = useSelector((state) => state.profile.profile);
-
-  console.log(profileValues[0]);
+  const profileValues = profile;
+  //fetcharofile
+  console.log(profile);
   const { userId } = useParams();
 
-  const[firstNameValue , setFirstNameValue] = useState(profileValues[0]?profileValues[0]['first_name']:'');
-  const[lastNameValue , setLastNameValue] = useState(profileValues[0]?profileValues[0]['last_name']:'');
-  const[emailValue , setEmailValue] = useState(profileValues[0]?profileValues[0]['email']:'');
-  const[heightValue , setHeightValue] = useState(profileValues[0]?profileValues[0]['height']:'');
-  const[heightUnitValue , setHeightUnitValue] = useState(profileValues[0]?profileValues[0]['height_unit']:'');
-  const[weightValue , setWeightValue] = useState(profileValues[0]?profileValues[0]['weight']:'');
-  const[weightUnitValue , setWeightUnitValue] = useState(profileValues[0]?profileValues[0]['weight_unit']:'');
-  const[ageValue , setageValue] = useState(profileValues[0]?profileValues[0]['age']:'');
-  const[sportsValue , setSportValue] = useState(profileValues[0]?profileValues[0]['sport']:'');
-  const[schoolValue , setSchoolValue] = useState(profileValues[0]?profileValues[0]['school']:'');
+  const dispatch = useDispatch();
+
+  // useEffect(() => {
+  //   dispatch(fetcharofile(userId));
+  // },);
+
+
+ 
+
+ 
+
+  const[firstNameValue , setFirstNameValue] = useState(profileValues[0]?profileValues[0]['first_name']:profileValues['first_name']);
+  const[lastNameValue , setLastNameValue] = useState(profileValues[0]?profileValues[0]['last_name']:profileValues['last_name']);
+  const[emailValue , setEmailValue] = useState(profileValues[0]?profileValues[0]['email']:profileValues['email']);
+  const[heightValue , setHeightValue] = useState(profileValues[0]?profileValues[0]['height']:profileValues['height']);
+  const[heightUnitValue , setHeightUnitValue] = useState(profileValues[0]?profileValues[0]['height_unit']:profileValues['height_unit']);
+  const[weightValue , setWeightValue] = useState(profileValues[0]?profileValues[0]['weight']:profileValues['weight']);
+  const[weightUnitValue , setWeightUnitValue] = useState(profileValues[0]?profileValues[0]['weight_unit']:profileValues['weight_unit']);
+  const[ageValue , setageValue] = useState(profileValues[0]?profileValues[0]['age']:profileValues['age']);
+  const[sportsValue , setSportValue] = useState(profileValues[0]?profileValues[0]['sport']:profileValues['sport']);
+  const[schoolValue , setSchoolValue] = useState(profileValues[0]?profileValues[0]['school']:profileValues['school']);
   
   
 
@@ -76,7 +88,9 @@ const Profile = ({profile , loading, error, updateaProfile,}) => {
   const weightRef = useRef(null);
   const ageRef = useRef(null);
   const schoolRef = useRef(null);
-
+  const heightUnitRef = useRef(null);
+  const weightUnitRef = useRef(null);
+  const sportsRef = useRef(null);
 
   
   
@@ -98,12 +112,14 @@ const Profile = ({profile , loading, error, updateaProfile,}) => {
           height:heightRef.current.value,
           weight:weightRef.current.value,
           age:ageRef.current.value,
-          sport:dataSportelected,
+          sport:dataSportelected ? dataSportelected : sportsRef.current.value,
           school:schoolRef.current.value,
-          [heightUnit]:dataHelected,
-          [weightUnit]:dataWSelected
+          [heightUnit]:dataHelected ? dataHelected : heightUnitRef.current.value,
+          [weightUnit]:dataWSelected ? dataWSelected : weightUnitRef.current.value,
 
         };
+        console.log(dataWSelected,dataHelected, dataSportelected )
+        console.log('userid',userId);
   
     await updateaProfile(userId,JSON.parse(JSON.stringify(profileDataToSubmit)));
       // Handle successful registration (e.g., navigate to profile)
@@ -146,7 +162,8 @@ const Profile = ({profile , loading, error, updateaProfile,}) => {
           placeholder={"cm/in"}
           menuPlacement="top"
           required
-          value={optionsH.find(option => option.value === heightUnitValue)}
+          defaultValue={optionsH.find(option => option.value === heightUnitValue)}
+          ref={heightUnitRef}
           
         />
         </div>
@@ -158,10 +175,11 @@ const Profile = ({profile , loading, error, updateaProfile,}) => {
           // value={optionsW.filter(function (option) {
           //   return option.value === dataW;
           // })}
-          value={optionsW.find(option => option.value === weightUnitValue)}
+          defaultValue={optionsW.find(option => option.value === weightUnitValue)}
           label="Single select"
           placeholder={"kg/lb"}
           menuPlacement="top"
+          ref={weightUnitRef}
           required
         />
         </div>
@@ -177,10 +195,11 @@ const Profile = ({profile , loading, error, updateaProfile,}) => {
           // value={options.filter(function (option) {
           //   return option.value === data;
           // })}
-          value={options.find(option => option.value === sportsValue)}
+          defaultValue={options.find(option => option.value === sportsValue)}
           label="Single select"
           placeholder={"Sport"}
           menuPlacement="top"
+          ref={sportsRef}
           required
         />
         </div>
@@ -200,7 +219,7 @@ const Profile = ({profile , loading, error, updateaProfile,}) => {
 
 const mapStateToProps = (state) => {
   return {
-    profile: state.data.profile,
+    profile: state.profile.profile,
     loading: state.data.loading,
     error: state.data.error,
   };

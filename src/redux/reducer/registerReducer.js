@@ -11,11 +11,17 @@ const registerReducer = (state = initialState, action) => {
   // Log the action
   switch (action.type) {
     case actionType.POST_DATA_REQUEST:
-      return { ...state, loading: true, error: null };
+      return { ...state, loading: true, error: null, profile:null };
     case actionType.POST_DATA_SUCCESS:
       console.log('Payload:', action.payload);  // Log the payload
       return { ...state, loading: false, data: action.payload, error: null };
     case actionType.POST_DATA_FAILURE:
+      return { ...state, loading: false, error: action.payload };
+    case actionType.POST_LOGIN_REQUEST:
+      return { ...state,loading: true ,error:null};
+    case actionType.POST_LOGIN_SUCCESS:
+      return { ...state, loading: false, profile: action.payload , error:null };
+    case actionType.POST_LOGIN_FALIURE:
       return { ...state, loading: false, error: action.payload };
     default:
       return state;

@@ -11,9 +11,10 @@ export const postLoginRequest = () => {
   };
   
   export const postLoginSuccess = (data) => {
+    console.log(data[0]);
     return {
       type: actionTypes.POST_LOGIN_SUCCESS,
-      payload: data,
+      payload: data[0],
     };
   };
   

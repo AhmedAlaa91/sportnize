@@ -28,6 +28,12 @@ const profileReducer = (state = initialState, action) => {
         return { ...state, loading: false, profile: action.payload , error:null };
       case actionType.POST_LOGIN_FALIURE:
         return { ...state, loading: false, error: action.payload };
+      case actionType.PUT_PROFILE_REQUEST:
+        return { ...state,loading: true ,error:null};
+      case actionType.PUT_PROFILE_SUCCESS:
+        return { ...state, loading: false, profile: action.payload , error:null };
+      case actionType.PUT_PROFILE_FALIURE:
+        return { ...state, loading: false, error: action.payload };
       default:
         return state;
     }

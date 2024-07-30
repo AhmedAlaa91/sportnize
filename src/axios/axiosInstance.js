@@ -6,7 +6,7 @@ import * as log from 'loglevel';
 
 async function createAxiosInstance() {
   try {
-    const baseURL = 'https://capturebackend.pythonanywhere.com/api';
+    const baseURL = 'http://127.0.0.1:8080/api';
     //const token = await getAccessToken();
     const instance = axios.create({
       baseURL,

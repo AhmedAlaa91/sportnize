@@ -6,7 +6,8 @@ import About from './About';
 import Profile from './Profile/Profile';
 import Home from './Home';
 import LoginSignup from './LoginSignup/LoginSignup'
-import WebCam from './Camera/WebCam2'
+import WebCam from './Camera/WebCam3'
+import Gallery from './Gallery/gallery'
 //lazy loading for loading page component
 // reference:https://react.dev/reference/react/lazy
 
@@ -28,6 +29,8 @@ const Pages = () => {
             <Route path="/profile/:userId" element={<Profile/>} />
             <Route path="/loginsignup/:actionType" element={<LoginSignup/>} />
             <Route path="/cam" element={<WebCam/>} />
+            <Route path="/gallery" element={<Gallery/>} />
+            
           </Routes>
 
 
