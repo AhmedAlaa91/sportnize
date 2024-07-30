@@ -11,6 +11,8 @@ export const postRegisterRequest = () => {
   };
   
   export const postRegisterSuccess = (data) => {
+    console.log('data');
+    console.log(data);
     return {
       type: actionTypes.POST_DATA_SUCCESS,
       payload: data,
@@ -19,7 +21,7 @@ export const postRegisterRequest = () => {
   
   export const postRegisterFailure = (error) => {
     return {
-      type: actionTypes.POST_DATA_FALIURE,
+      type: actionTypes.POST_DATA_FAILURE,
       payload: error,
     };
   };
@@ -27,8 +29,9 @@ export const postRegisterRequest = () => {
 
 
   export const registeraNewUser = (body) => async (dispatch) => {
-    dispatch(postRegisterRequest());
+    
     try {
+      dispatch(postRegisterRequest());
       const response = await registerNewUser(body)
       dispatch(postRegisterSuccess(response.data));
     } catch (error) {

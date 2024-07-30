@@ -14,7 +14,7 @@ const profileReducer = (state = initialState, action) => {
         return { ...state,loading: true ,error:null};
       case actionType.POST_DATA_SUCCESS:
         return { ...state, loading: false, profile: action.payload , error:null };
-      case actionType.POST_DATA_FALIURE:
+      case actionType.POST_DATA_FAILURE:
         return { ...state, loading: false, error: action.payload };
       case actionType.FETCH_PROFILE_REQUEST:
         return { ...state,loading: true ,error:null};

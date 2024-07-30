@@ -33,7 +33,7 @@ export const postLoginRequest = () => {
       dispatch(postLoginSuccess([dataParsed,response.data['refresh']]));
     } catch (error) {
         if (error) { // Check for non-200 status code
-            throw new Error(`Registration failed: ${error.message || 'Bad request'}`); // Throw error
+            throw new Error(`Login failed: ${error.message || 'Bad request'}`); // Throw error
           }
         dispatch(postLoginFailure(error.message));
     }

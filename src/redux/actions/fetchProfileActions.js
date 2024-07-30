@@ -32,7 +32,7 @@ export const fetchProfileRequest = () => {
       dispatch(fetchProfileSuccess(response.data));
     } catch (error) {
         if (error) { // Check for non-200 status code
-            throw new Error(`Registration failed: ${error.message || 'Bad request'}`); // Throw error
+            throw new Error(`fetch profile failed: ${error.message || 'Bad request'}`); // Throw error
           }
         dispatch(fetchProfileFailure(error.message));
     }

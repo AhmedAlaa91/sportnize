@@ -34,7 +34,7 @@ export const putProfileRequest = () => {
       dispatch(putProfileSuccess(response.data));
     } catch (error) {
         if (error) { // Check for non-200 status code
-            throw new Error(`Registration failed: ${error.message || 'Bad request'}`); // Throw error
+            throw new Error(`Update Profile failed: ${error.message || 'Bad request'}`); // Throw error
           }
         dispatch(putProfileFailure(error.message));
     }
