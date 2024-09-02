@@ -25,12 +25,15 @@ export default function App() {
         fetchFilteredPhotos();
     }, []);
 
+
     if (photos.length === 0) {
         return <p>Loading photos...</p>;
     }
   return (
     <div className="App">
-      <Slider images={photos} />
+      <Slider initialImages={photos} />
+
+      
     </div>
   );
 }
